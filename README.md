@@ -14,8 +14,8 @@ docker run -d --name some_name -v ~/.kube/config:/root/.kube/config:ro -e REPLIC
 We mount the `~/.kube/config` into docker container under `/root/.kube/config` as read only.
 
 We pass some parameters used in the code, params like:
-REPLICA_SETS - number of desired replicas, default is 0
-LABEL_NAME - label for excepted namespaces, default is exception
-LABEL_VALUE - label value for excepted namespaces, default is true
+* REPLICA_SETS - number of desired replicas, default is 0
+* LABEL_NAME - label for excepted namespaces, default is exception
+* LABEL_VALUE - label value for excepted namespaces, default is true
 
 
