@@ -21,9 +21,9 @@ api_instance = client.CoreV1Api(api_client)
 # Get the Apps API object
 apps_api_instance = client.AppsV1Api(api_client)
 
-replica_sets = os.environ.get('REPLICA_SETS')
-label_name = os.environ.get('LABEL_NAME')
-label_value = os.environ.get('LABEL_VALUE')
+replica_sets = os.environ.get('REPLICA_SETS', 0)
+label_name = os.environ.get('LABEL_NAME', 'exception')
+label_value = os.environ.get('LABEL_VALUE', 'true')
 
 def main():
     # Get the relevant namespaces
