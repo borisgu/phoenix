@@ -5,6 +5,7 @@ import logging
 import json
 from flask import Flask, request, jsonify
 from kubernetes import client, config
+from config import started, stopped, status
 
 application = Flask(__name__)
 application.config['JSONIFY_PRETTYPRINT_REGULAR'] = True
@@ -88,10 +89,16 @@ def set_scale_operation():
     
     # Get all namespaces labels for future use
     ns_labels = json.loads(helpers.get_namespace_details(api_core, namespace))
-    if ns_labels["status"] == "down" and int(replicas) == 0:
+    if status not in ns_labels:
+        logging.info("It's the first time this namespace manipulated\n Going to label the namespace with {}=up label".format(status))
+        helpers.patch_namespace_label(api_core, namespace, status, "up")
+        # Now we need to reload the new labels
+        ns_labels = json.loads(helpers.get_namespace_details(api_core, namespace))
+    
+    if ns_labels[status] == "down" and int(replicas) == 0:
         return jsonify({'message': 'ENV {} is already down'.format(namespace)}), 200
     
-    if ns_labels["status"] == "up" and int(replicas) > 0:
+    if ns_labels[status] == "up" and int(replicas) > 0:
         return jsonify({'message': 'ENV {} is already up'.format(namespace)}), 200
 
     # Get all deployments in relevant namespace
@@ -104,14 +111,14 @@ def set_scale_operation():
     # Now we need to set a label with the time we patched the deployments in the relevant namespace
     timestamp = int(time.time())
     if int(replicas) == 0:
-        patch_time_result = helpers.patch_namespace_label(api_core, namespace, "stopped_at", timestamp)
-        patch_status_result = helpers.patch_namespace_label(api_core, namespace, "status", "down")
+        patch_time_result = helpers.patch_namespace_label(api_core, namespace, stopped, timestamp)
+        patch_status_result = helpers.patch_namespace_label(api_core, namespace, status, "down")
         # Update working_time label
         helpers.update_working_time(api_core, namespace)
 
     elif int(replicas) > 0:
-        patch_time_result = helpers.patch_namespace_label(api_core, namespace, "started_at", timestamp)
-        patch_status_result = helpers.patch_namespace_label(api_core, namespace, "status", "up")
+        patch_time_result = helpers.patch_namespace_label(api_core, namespace, started, timestamp)
+        patch_status_result = helpers.patch_namespace_label(api_core, namespace, status, "up")
 
     if patch_time_result and patch_status_result and limited:
         return jsonify({'info': 'All deployments in {ns} scaled to {rep}'.format(ns=namespace, rep=replicas), 'message': 'Replicas limited to 1'}), 200

@@ -1,9 +1,8 @@
 
 import datetime
 import json
+from config import started, stopped, created, worktime, excepted_namespaces
 
-
-IGNORED_NAMESPACES=['kube-system','kube-public','kube-flannel','kube-node-lease']
 
 def get_namespaces(api_instance):
     # Get a list of all Namespaces in the cluster
@@ -14,7 +13,7 @@ def get_namespaces(api_instance):
 
     # Loop through each Namespace and print its name and labels
     for ns in all_namespaces:
-        if ns.metadata.name not in IGNORED_NAMESPACES:
+        if ns.metadata.name not in excepted_namespaces:
             # print("Namespace: {}".format(ns.metadata.name))
             # print("Labels: {}".format(ns.metadata.labels))
             # print("\n")
@@ -48,7 +47,7 @@ def get_excepted_namespaces(api, label_name, label_value):
         # Get the labels of the Namespace
         labels = ns.metadata.labels
         
-        if ns.metadata.name in IGNORED_NAMESPACES:
+        if ns.metadata.name in excepted_namespaces:
             continue
         
         if label_name in labels and labels[label_name].lower() == label_value:
@@ -116,16 +115,16 @@ def update_working_time(api, namespace_name):
     labels = namespace.metadata.labels
 
     # Check if working_time label already exists
-    if "working_time" not in namespace.metadata.labels:
-        created_at_value = namespace.metadata.labels.get("created_at")
-        stopped_at_value = namespace.metadata.labels.get("stopped_at")
+    if worktime not in namespace.metadata.labels:
+        created_at_value = namespace.metadata.labels.get(created)
+        stopped_at_value = namespace.metadata.labels.get(stopped)
         created_time = datetime.datetime.fromtimestamp(int(created_at_value))
         stopped_time = datetime.datetime.fromtimestamp(int(stopped_at_value))
         # Calculate the working_time and convert the work_time to hours
         work_time = (stopped_time - created_time).total_seconds()/3600
         
         # Create the patch object
-        labels["working_time"] = str(work_time)
+        labels[worktime] = str(work_time)
 
         # Patch the namespace with the updated labels
         body = {"metadata": {"labels": labels}}
@@ -135,16 +134,16 @@ def update_working_time(api, namespace_name):
         # Check whether the update was successful
         print("Checking that the working_time patch applied")
         updated_namespace = api.patch_namespace(name=namespace_name, body=body)
-        if updated_namespace.metadata.labels.get("working_time") == str(work_time):
+        if updated_namespace.metadata.labels.get(worktime) == str(work_time):
             print("working_time patch applied successfully")
             return True
         else:
             print("working_time patch not applied")
             return False
     else:
-        started_at_value = namespace.metadata.labels.get("started_at")
-        stopped_at_value = namespace.metadata.labels.get("stopped_at")
-        working_time_value = namespace.metadata.labels.get("working_time")
+        started_at_value = namespace.metadata.labels.get(started)
+        stopped_at_value = namespace.metadata.labels.get(stopped)
+        working_time_value = namespace.metadata.labels.get(worktime)
         started_time = datetime.datetime.fromtimestamp(int(started_at_value))
         stopped_time = datetime.datetime.fromtimestamp(int(stopped_at_value))
         # Calculate the working_time between started and stoppes times and convert the work_time to hours
@@ -154,7 +153,7 @@ def update_working_time(api, namespace_name):
         print("This is the calculated total working time - {}".format(total_working_time))
 
         # Create the patch object
-        labels["working_time"] = str(total_working_time)
+        labels[worktime] = str(total_working_time)
 
         # Patch the namespace with the updated labels
         body = {"metadata": {"labels": labels}}
@@ -164,7 +163,7 @@ def update_working_time(api, namespace_name):
         # Check whether the update was successful
         print("Checking that the total working_time patch applied")
         updated_namespace = api.patch_namespace(name=namespace_name, body=body)
-        if updated_namespace.metadata.labels.get("working_time") == str(total_working_time):
+        if updated_namespace.metadata.labels.get(worktime) == str(total_working_time):
             print("working_time patch applied successfully")
             return True
         else:
