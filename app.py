@@ -5,13 +5,11 @@ import logging
 import json
 from flask import Flask, request, jsonify
 from kubernetes import client, config
-from config import started, stopped, status
+from config import started, stopped, status, max_replicas, version, app_name
 
 application = Flask(__name__)
 application.config['JSONIFY_PRETTYPRINT_REGULAR'] = True
 
-VERSION = '1.0'
-MAX_REPLICAS = '1'
 
 # Logging configuration
 logging.basicConfig(
@@ -20,7 +18,7 @@ logging.basicConfig(
     datefmt='%Y-%m-%d %H:%M:%S')
 
 
-# Load the Kubernetes configuration from the default location
+# Load the Kubernetes configuration from the defa   ult location
 config.load_kube_config()
 
 # Create a Kubernetes API client
@@ -32,6 +30,12 @@ api_core = client.CoreV1Api(api_client)
 # Get the Apps API object
 api_apps = client.AppsV1Api(api_client)
 
+# Get app version
+@ application.route('/version', methods=['GET'])
+def get_app_version():
+    """App version information"""
+    return jsonify({'name': app_name, "version": version}), 200
+
 # Get a list of all namespaces
 @application.route('/namespaces/all', methods=['GET'])
 def get_namespaces():
@@ -42,6 +46,21 @@ def get_namespaces():
 
     return jsonify({'namespaces': all_namespaces}), 200
 
+
+# Get a list of all namespaces
+@application.route('/report', methods=['GET'])
+def get_detailed_report():
+    logging.info("Generating report")
+    all_namespaces = helpers.get_namespaces(api_core)
+    if not all_namespaces:
+        return jsonify({'message': 'no namespaces found'}), 404
+    
+    data = []
+    for namespace in all_namespaces:
+        ns_info = helpers.get_namespace_details(api_core, namespace)
+        data.append(transform_data(ns_info))
+
+    return jsonify({'report': data}), 200
 
 # Get a list of all excepted namespaces by prividing the label and value in URL
 # For Example:
@@ -81,7 +100,7 @@ def set_scale_operation():
     # We limit the number of replicas to 1
     if int(replicas) > 1:
         limited = True
-        replicas = MAX_REPLICAS
+        replicas = max_replicas
 
     # Check if the namespace exists
     if namespace not in helpers.get_namespaces(api_core):
@@ -127,9 +146,23 @@ def set_scale_operation():
         return jsonify({'info': 'All deployments in {ns} scaled to {rep}'.format(ns=namespace, rep=replicas)}), 200
 
 
+# Internal helpers
+def transform_data(entity):
+    entity_info = json.loads(entity)
+    return {
+        "name": entity_info.get("kubernetes.io/metadata.name"),
+        "owner": entity_info.get("owner", "Unknown"),
+        "status": entity_info.get("status", "Unknown"),
+        "created at": entity_info.get("created_at", "Unknown"),
+        "started at": entity_info.get("started_at", "Unknown"),
+        "stopped at": entity_info.get("stopped_at", "Unknown"),
+        "working time": entity_info.get("working_time", "Unknown"),
+        "excepted": entity_info.get("exception", "Unknown")
+    }
+    
 
 if __name__ == "__main__":
     ENVIRONMENT_DEBUG = os.environ.get("APP_DEBUG", True)
-    ENVIRONMENT_PORT = os.environ.get("APP_PORT", 5001)
+    ENVIRONMENT_PORT = os.environ.get("APP_PORT", 5000)
     application.run(host='0.0.0.0', port=ENVIRONMENT_PORT,
                     debug=ENVIRONMENT_DEBUG)

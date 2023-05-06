@@ -10,5 +10,12 @@
     },
     "excepted_resources":{
         "namespaces": ["kube-system","kube-public","kube-flannel","kube-node-lease"]
+    },
+    "resources_limits":{
+        "max_pod_replicas": "1"
+    },
+    "app_info":{
+        "name": "Phoenix",
+        "version": "1.1.0"
     }
 }
