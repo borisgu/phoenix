@@ -17,8 +17,10 @@ The labels are configurable throuth the `config.json` file.
 The idea is not running some database and use labels on the namespaces. This way this up is stateless and can be restarted or re-deployed somewhere else.
 
 ---
-<br>
+### Build and Use
+
 To build the docker image, run:
+
 ```
 docker build -t some_name:some_tag .
 ```
@@ -26,7 +28,7 @@ docker build -t some_name:some_tag .
 To tun the docker, just run the following command:
 
 ```
-docker run -d --name some_name -v ~/.kube/config:/www/.kube/config:ro -e REPLICA_SETS=0 -v ./config.json:/var/www/config.json:ro boris1580/phoenix:v1.1.0
+docker run -d --name some_name -v ~/.kube/config:/www/.kube/config:ro -v ./config.json:/var/www/config.json:ro boris1580/phoenix:v1.1.0
 ```
 We mount the `~/.kube/config` into docker container under `/www/.kube/config` as read only.
 In addition we mount the `config.json` file into `/var/www/config.json` as read only as well.
@@ -65,14 +67,14 @@ Example of `config.json`:
 
 Current capabilities and command:
 
-    "excepted_resources":{
+
 1. Get all namespaces: 
 
 ```
 curl http://127.0.0.1:5001/namespaces/all
 ```
 
-gets all namespaces except the `excepted_resources.namespaces` in config.json.
+Gets all namespaces except the `excepted_resources.namespaces` in config.json.
 
 2. Get excepted namespaces:
 
@@ -80,7 +82,7 @@ gets all namespaces except the `excepted_resources.namespaces` in config.json.
 curl http://127.0.0.1:5001/namespaces/excepted?label=exception&value=true
 ```
 
-gets all excepted namespaces. We pass the `exception` label (same as configured in config.json) and its value.
+Gets all excepted namespaces. We pass the `exception` label (same as configured in config.json) and its value.
 
 3. Scale deployments up/down:
 
