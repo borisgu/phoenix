@@ -84,7 +84,8 @@ gets all excepted namespaces. We pass the `exception` label (same as configured 
 
 3. Scale deployments up/down:
 
-```curl -X POST 'http://127.0.0.1:5001/scale' \
+```
+curl -X POST 'http://127.0.0.1:5001/scale' \
 --header 'Content-Type: application/json' \
 --data '{
     "namespace": "helloworld",
