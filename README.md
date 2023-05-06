@@ -1,4 +1,4 @@
-# kube-resources-controller
+# Phoenix
 This small project started as a need to set replica sets to 0 to save cost in cloud provider. The idea is to go over all deployments in all deployments in all relevant namespaces and set the replica sets to 0.
 
 There are some ignored system namespaces, like: kube-system, kube-public etc ..
