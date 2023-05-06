@@ -1,0 +1,21 @@
+{
+    "namespace_labels": {
+        "started": "started_at",
+        "stopped": "stopped_at",
+        "created": "created_at",
+        "worktime": "working_time",
+        "exception": "exception",
+        "owner": "owner",
+        "status": "status"
+    },
+    "excepted_resources":{
+        "namespaces": ["kube-system","kube-public","kube-flannel","kube-node-lease"]
+    },
+    "resources_limits":{
+        "max_pod_replicas": "1"
+    },
+    "app_info":{
+        "name": "Phoenix",
+        "version": "1.1.0"
+    }
+}
