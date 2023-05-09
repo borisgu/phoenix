@@ -1,11 +1,12 @@
 import os
 import time
+import kube
 import helpers
 import logging
 import json
 from flask import Flask, request, jsonify
 from kubernetes import client, config
-from config import started, stopped, status, max_replicas, version, app_name
+from config import started, stopped, status, max_replicas, version, app_name, timeout
 
 application = Flask(__name__)
 application.config['JSONIFY_PRETTYPRINT_REGULAR'] = True
@@ -22,7 +23,7 @@ logging.basicConfig(
 config.load_kube_config()
 
 # Create a Kubernetes API client
-api_client = client.ApiClient()
+api_client = client.ApiClient(timeout_seconds=timeout)
 
 # Get the Namespace API object
 api_core = client.CoreV1Api(api_client)
@@ -40,7 +41,7 @@ def get_app_version():
 @application.route('/namespaces/all', methods=['GET'])
 def get_namespaces():
     logging.info("Getting all namespaces")
-    all_namespaces = helpers.get_namespaces(api_core)
+    all_namespaces = kube.get_namespaces(api_core)
     if not all_namespaces:
         return jsonify({'message': 'no namespaces found'}), 404
 
@@ -51,14 +52,14 @@ def get_namespaces():
 @application.route('/report', methods=['GET'])
 def get_detailed_report():
     logging.info("Generating report")
-    all_namespaces = helpers.get_namespaces(api_core)
+    all_namespaces = kube.get_namespaces(api_core)
     if not all_namespaces:
         return jsonify({'message': 'no namespaces found'}), 404
     
     data = []
     for namespace in all_namespaces:
-        ns_info = helpers.get_namespace_details(api_core, namespace)
-        data.append(transform_data(ns_info))
+        ns_info = kube.get_namespace_details(api_core, namespace)
+        data.append(helpers.transform_data(ns_info))
 
     return jsonify({'report': data}), 200
 
@@ -74,7 +75,7 @@ def get_excepted_namespaces():
     elif not value:
         return jsonify({'error': 'value parameter is required'}), 400
     logging.info("Getting all excepted namespaces")
-    excepted_namespaces = helpers.get_excepted_namespaces(api_core, label, value)
+    excepted_namespaces = kube.get_excepted_namespaces(api_core, label, value)
     if not excepted_namespaces:
         return jsonify({'message': 'no excepted namespaces found'}), 404
     
@@ -98,21 +99,21 @@ def set_scale_operation():
         return jsonify({'error': 'Value of replicas must be 0 or above'}), 400
     
     # We limit the number of replicas to 1
-    if int(replicas) > 1:
+    if int(replicas) > max_replicas:
         limited = True
         replicas = max_replicas
 
     # Check if the namespace exists
-    if namespace not in helpers.get_namespaces(api_core):
+    if namespace not in kube.get_namespaces(api_core):
         return jsonify({'info': 'namespace {} does not exist'.format(namespace)}), 400
     
     # Get all namespaces labels for future use
-    ns_labels = json.loads(helpers.get_namespace_details(api_core, namespace))
+    ns_labels = json.loads(kube.get_namespace_details(api_core, namespace))
     if status not in ns_labels:
         logging.info("It's the first time this namespace manipulated\n Going to label the namespace with {}=up label".format(status))
-        helpers.patch_namespace_label(api_core, namespace, status, "up")
+        kube.patch_namespace_label(api_core, namespace, status, "up")
         # Now we need to reload the new labels
-        ns_labels = json.loads(helpers.get_namespace_details(api_core, namespace))
+        ns_labels = json.loads(kube.get_namespace_details(api_core, namespace))
     
     if ns_labels[status] == "down" and int(replicas) == 0:
         return jsonify({'message': 'ENV {} is already down'.format(namespace)}), 200
@@ -121,44 +122,29 @@ def set_scale_operation():
         return jsonify({'message': 'ENV {} is already up'.format(namespace)}), 200
 
     # Get all deployments in relevant namespace
-    deployments = helpers.get_deployments(api_apps, namespace)
+    deployments = kube.get_deployments(api_apps, namespace)
     # Set all deployments to relevant replica number
     for deploy in deployments:
         logging.info("Changing replica set in: {ns} to {num}".format(ns=namespace, num=replicas))
-        helpers.change_replica_set(api_apps, namespace, deploy, int(replicas))
+        kube.change_deployment_replica_set(api_apps, namespace, deploy, int(replicas))
     
     # Now we need to set a label with the time we patched the deployments in the relevant namespace
     timestamp = int(time.time())
     if int(replicas) == 0:
-        patch_time_result = helpers.patch_namespace_label(api_core, namespace, stopped, timestamp)
-        patch_status_result = helpers.patch_namespace_label(api_core, namespace, status, "down")
+        patch_time_result = kube.patch_namespace_label(api_core, namespace, stopped, timestamp)
+        patch_status_result = kube.patch_namespace_label(api_core, namespace, status, "down")
         # Update working_time label
-        helpers.update_working_time(api_core, namespace)
+        kube.update_working_time(api_core, namespace)
 
     elif int(replicas) > 0:
-        patch_time_result = helpers.patch_namespace_label(api_core, namespace, started, timestamp)
-        patch_status_result = helpers.patch_namespace_label(api_core, namespace, status, "up")
+        patch_time_result = kube.patch_namespace_label(api_core, namespace, started, timestamp)
+        patch_status_result = kube.patch_namespace_label(api_core, namespace, status, "up")
 
     if patch_time_result and patch_status_result and limited:
         return jsonify({'info': 'All deployments in {ns} scaled to {rep}'.format(ns=namespace, rep=replicas), 'message': 'Replicas limited to 1'}), 200
     
     if patch_time_result and patch_status_result:
         return jsonify({'info': 'All deployments in {ns} scaled to {rep}'.format(ns=namespace, rep=replicas)}), 200
-
-
-# Internal helpers
-def transform_data(entity):
-    entity_info = json.loads(entity)
-    return {
-        "name": entity_info.get("kubernetes.io/metadata.name"),
-        "owner": entity_info.get("owner", "Unknown"),
-        "status": entity_info.get("status", "Unknown"),
-        "created at": entity_info.get("created_at", "Unknown"),
-        "started at": entity_info.get("started_at", "Unknown"),
-        "stopped at": entity_info.get("stopped_at", "Unknown"),
-        "working time": entity_info.get("working_time", "Unknown"),
-        "excepted": entity_info.get("exception", "Unknown")
-    }
     
 
 if __name__ == "__main__":

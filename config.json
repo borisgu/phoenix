@@ -1,21 +1,26 @@
 {
     "namespace_labels": {
+        "name": "kubernetes.io/metadata.name",
         "started": "started_at",
         "stopped": "stopped_at",
         "created": "created_at",
         "worktime": "working_time",
         "exception": "exception",
         "owner": "owner",
-        "status": "status"
+        "status": "status",
+        "ttl": "ttl"
     },
-    "excepted_resources":{
-        "namespaces": ["kube-system","kube-public","kube-flannel","kube-node-lease"]
+    "excepted_resources": {
+        "namespaces": ["kube-system","kube-public","kube-flannel","kube-node-lease","envoy-gateway-system","gateway-system","karpenter","nginx-gateway","ops"]
     },
-    "resources_limits":{
+    "resources_limits": {
         "max_pod_replicas": "1"
     },
-    "app_info":{
+    "app_info": {
         "name": "Phoenix",
         "version": "1.1.0"
+    },
+    "kube_api_config": {
+        "timeout": 120
     }
 }

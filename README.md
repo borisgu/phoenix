@@ -28,9 +28,10 @@ docker build -t some_name:some_tag .
 To tun the docker, just run the following command:
 
 ```
-docker run -d --name some_name -v ~/.kube/config:/www/.kube/config:ro -v ./config.json:/var/www/config.json:ro boris1580/phoenix:v1.1.0
+docker run -d --name some_name -v ~/.kube/config:/home/www/.kube/config:ro -v ./config.json:/var/www/config.json:ro -e AWS_ACCESS_KEY_ID=your_aws_access_key -e AWS_SECRET_ACCESS_KEY=your_aws_secret_access_key boris1580/phoenix:v1.1.0
 ```
 We mount the `~/.kube/config` into docker container under `/www/.kube/config` as read only.
+We need to pass AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY in case we use EKS oidc based access.
 In addition we mount the `config.json` file into `/var/www/config.json` as read only as well.
 
 **Note:**
