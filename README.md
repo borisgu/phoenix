@@ -58,8 +58,8 @@ Example of `config.json`:
         "status": "status",
         "ttl": "ttl"
     },
-    "excepted_resources": {
-        "namespaces": ["kube-system","kube-public","kube-flannel","kube-node-lease","envoy-gateway-system","gateway-system","karpenter","nginx-gateway","ops"]
+    "ignored_resources": {
+        "namespaces": ["default", "kube-system","kube-public","kube-flannel","kube-node-lease","envoy-gateway-system","gateway-system","karpenter","nginx-gateway","ops"]
     },
     "resources_limits": {
         "max_pod_replicas": "1"
@@ -69,9 +69,10 @@ Example of `config.json`:
         "version": "1.1.0"
     },
     "kube_api_config": {
-        "request_timeout": 120
+        "request_timeout": "120"
     }
 }
+
 ````
 
 
