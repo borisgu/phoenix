@@ -14,7 +14,7 @@ exception = config['namespace_labels']['exception']
 owner = config['namespace_labels']['owner']
 status = config['namespace_labels']['status']
 ttl = config['namespace_labels']['ttl']
-excepted_namespaces = config['excepted_resources']['namespaces']
+ignored_namespaces = config['ignored_resources']['namespaces']
 
 # Resources limits config
 max_replicas = config['resources_limits']['max_pod_replicas']
@@ -24,4 +24,4 @@ app_name = config['app_info']['name']
 version = config['app_info']['version']
 
 # Kubernetes API configuration
-timeout = config['kube_api_config']['timeout']
+request_timeout = config['kube_api_config']['request_timeout']
