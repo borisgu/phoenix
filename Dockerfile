@@ -4,8 +4,10 @@ ENV GROUP_ID=1000 \
     USER_ID=1000
 
 WORKDIR /var/www/
+RUN apk update && \
+    apk add --no-cache aws-cli
 
-ADD wsgi.py app.py helpers.py config.py requirements.txt /var/www/
+ADD wsgi.py app.py kube.py helpers.py config.py requirements.txt /var/www/
 RUN pip install -r requirements.txt && \
     rm requirements.txt
 
