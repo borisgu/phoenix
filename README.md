@@ -85,7 +85,7 @@ Example of `config.json`:
 curl http://127.0.0.1:5001/namespaces/all
 ```
 
-Gets all namespaces except the `excepted_resources.namespaces` in config.json.
+Gets all namespaces except the `ignored_resources.namespaces` in config.json.
 
 2. Get excepted namespaces:
 
@@ -101,7 +101,7 @@ Gets all excepted namespaces. The `exception` label is configured in config.json
 curl http://127.0.0.1:5001/namespaces/expired
 ```
 
-Gets all expired namespaces except the `excepted_resources.namespaces` in config.json.
+Gets all expired namespaces except the `ignored_resources.namespaces` in config.json.
 
 3. Scale deployments up/down:
 
