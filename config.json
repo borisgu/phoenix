@@ -18,7 +18,7 @@
     },
     "app_info": {
         "name": "Phoenix",
-        "version": "1.2.0"
+        "version": "1.2.1"
     },
     "kube_api_config": {
         "request_timeout": "120"

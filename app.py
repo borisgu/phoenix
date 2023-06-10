@@ -76,12 +76,14 @@ def set_scale_operation():
     
     replicas = data.get("replicas")
     namespace = data.get("namespace")
+    force_scale = data.get("force", "false")
+    
     if not replicas or int(replicas) < 0:
         return jsonify({'error': 'Value of replicas must be 0 or above'}), 400
     
     # Check if the namespace is excepted
     excepted_namespaces = kube.get_excepted_namespaces()
-    if int(replicas) == 0 and namespace in excepted_namespaces:
+    if int(replicas) == 0 and namespace in excepted_namespaces and force_scale == "false":
         logging.info("Namespace {} is excepted and cannot be scaled down".format(namespace))
         return jsonify({'blocked': "namespace excepted"})
     
