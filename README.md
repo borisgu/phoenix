@@ -83,9 +83,11 @@ Example of `config.json`:
 
 We use helm to deploy it in cluster.
 We don't have kubeconfig cluster in pod so I used ServiceAccount with ClusterRole.
-To deploy this way change the config_mode to incluster in 'values.yaml' and run the following command:
+To deploy this way change the config_mode to incluster in `values.yaml` and run the following command:
 
-'''helm install phoenix helm-chart --namespace phoenix --create-namespace'''
+```
+helm install phoenix helm-chart --namespace phoenix --create-namespace
+```
 
 You can change the namespace to whatever you want
 
