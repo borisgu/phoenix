@@ -21,7 +21,7 @@ By default we create ENV with ttl label set to 30 (days). There is a job that se
 If the developer want to extend the expiration time, he can send a request and extend it. (Check the relevant REST api to do it)
 
 ---
-### Build and Use
+### Build and Deploy
 
 To build the docker image, run:
 
@@ -29,13 +29,15 @@ To build the docker image, run:
 docker build -t some_name:some_tag .
 ```
 
-To tun the docker, just run the following command:
+#### Deploy as docker
+
+To tun the docker, just change the config_mode to local and run the following command:
 
 ```
 docker run -d --name some_name -v ~/.kube/config:/home/www/.kube/config:ro -v ./config.json:/var/www/config.json:ro -e AWS_ACCESS_KEY_ID=your_aws_access_key -e AWS_SECRET_ACCESS_KEY=your_aws_secret_access_key boris1580/phoenix:v1.1.0
 ```
 We mount the `~/.kube/config` into docker container under `/www/.kube/config` as read only.
-We need to pass AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY in case we use EKS oidc based access.
+In case we want to control EKS cluster we usually need to pass AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY.
 In addition we mount the `config.json` file into `/var/www/config.json` as read only as well.
 
 **Note:**
@@ -69,12 +71,23 @@ Example of `config.json`:
         "version": "1.1.0"
     },
     "kube_api_config": {
-        "request_timeout": "120"
+        "request_timeout": "120",
+        "config_mode": "incluster"
     }
 }
 
 ````
 
+#### Deploy in k8s cluster
+
+
+We use helm to deploy it in cluster.
+We don't have kubeconfig cluster in pod so I used ServiceAccount with ClusterRole.
+To deploy this way change the config_mode to incluster in 'values.yaml' and run the following command:
+
+'''helm install phoenix helm-chart --namespace phoenix --create-namespace'''
+
+You can change the namespace to whatever you want
 
 ### Current capabilities and commands:
 
@@ -132,3 +145,4 @@ curl 'http://127.0.0.1:5001/version'
 Returns you the app name and the version. Both parameters configured in `config.json` under `app_info`.
 
 ---
+
