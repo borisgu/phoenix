@@ -9,6 +9,7 @@ RUN apk update && \
 
 ADD wsgi.py app.py kube.py helpers.py config.py requirements.txt /var/www/
 RUN pip install -r requirements.txt && \
+    pip install gunicorn && \
     rm requirements.txt
 
 RUN addgroup -g $GROUP_ID www && \

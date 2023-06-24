@@ -3,11 +3,14 @@ import datetime
 import json
 import helpers
 from kubernetes import client, config
-from config import started, stopped, created, worktime, ignored_namespaces, ttl, request_timeout, exception
+from config import started, stopped, created, worktime, ignored_namespaces, ttl, request_timeout, exception, kube_mode
 
 
-# Load the Kubernetes configuration from the defa   ult location
-config.load_kube_config()
+# Load the Kubernetes configuration according to configuration in json file
+if kube_mode == "incluster":
+    config.load_incluster_config()
+else:
+    config.load_kube_config()
 
 
 # Create a Kubernetes API client

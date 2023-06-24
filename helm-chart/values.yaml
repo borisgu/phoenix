@@ -1,0 +1,143 @@
+
+name: phoenix
+replicaCount: 1
+image: boris1580/phoenix
+tag: v1.2.12
+imagePullPolicy: IfNotPresent
+env: {}
+
+livenessProbe:
+  initialDelaySeconds: 5
+  periodSeconds: 60
+readinessProbe:
+  initialDelaySeconds: 5
+  periodSeconds: 60
+
+service:
+  type: ClusterIP
+  port: 5000
+
+ingress:
+  enabled: true
+  annotations:
+    kubernetes.io/ingress.class: nginx
+  tls: []
+    # - secretName: phoenix-tls
+    #   hosts:
+    #     - phoenix.bg.local
+  hosts:
+    - host: phoenix.bg.local
+      paths: 
+        - path: /namespaces/all
+          pathType: ImplementationSpecific
+          backend:
+            service:
+              name: phoenix
+              port:
+                number: 5000
+              # serviceName: phoenix
+              # servicePort: 5000
+        - path: /report
+          pathType: ImplementationSpecific
+          backend:
+            service:
+              name: phoenix
+              port:
+                number: 5000
+            # serviceName: phoenix
+            # servicePort: 5000
+        - path: /namespaces/excepted
+          pathType: ImplementationSpecific
+          backend:
+            service:
+              name: phoenix
+              port:
+                number: 5000
+            # serviceName: phoenix
+            # servicePort: 5000
+        - path: /scale
+          pathType: ImplementationSpecific
+          backend:
+            service:
+              name: phoenix
+              port:
+                number: 5000
+            # serviceName: phoenix
+            # servicePort: 5000
+        - path: /namespaces/expired
+          pathType: ImplementationSpecific
+          backend:
+            service:
+              name: phoenix
+              port:
+                number: 5000
+            # serviceName: phoenix
+            # servicePort: 5000
+        - path: /version
+          pathType: ImplementationSpecific
+          backend:
+            service:
+              name: phoenix
+              port:
+                number: 5000
+            # serviceName: phoenix
+            # servicePort: 5000
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: phoenix-user
+
+resources:
+  requests:
+    cpu: 250m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+config: |-
+  {
+      "namespace_labels": {
+          "name": "kubernetes.io/metadata.name",
+          "started": "started_at",
+          "stopped": "stopped_at",
+          "created": "created_at",
+          "worktime": "working_time",
+          "exception": "exception",
+          "owner": "owner",
+          "status": "status",
+          "ttl": "ttl"
+      },
+      "ignored_resources": {
+          "namespaces": ["default", "kube-system","kube-public","kube-flannel","kube-node-lease","envoy-gateway-system","gateway-system","karpenter","nginx-gateway","ops"]
+      },
+      "resources_limits": {
+          "max_pod_replicas": "1"
+      },
+      "app_info": {
+          "name": "Phoenix",
+          "version": "1.2.1"
+      },
+      "kube_api_config": {
+          "request_timeout": "120",
+          "config_mode": "incluster"
+      }
+  }

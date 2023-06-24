@@ -21,6 +21,7 @@
         "version": "1.2.1"
     },
     "kube_api_config": {
-        "request_timeout": "120"
+        "request_timeout": "120",
+        "config_mode": "incluster"
     }
 }
