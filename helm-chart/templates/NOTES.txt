@@ -1,0 +1,7 @@
+---
+*** Phoenix Deployment ***
+
+Remember to create SSL certificate. 
+{{- range .Values.ingress.hosts }}
+* To access phoenix: https://{{ .host }}/version
+{{- end }}

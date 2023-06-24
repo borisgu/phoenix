@@ -1,0 +1,9 @@
+apiVersion: v2
+name: phoenix
+description: Phoenix Helm Chart
+
+type: application
+
+version: 1.0
+
+appVersion: "1.2.1"

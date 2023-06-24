@@ -1,5 +1,4 @@
 kubernetes==26.1.0
 Flask==2.3.2
-gunicorn==20.1.0
 awscli==1.27.130
 prometheus-flask-exporter==0.22.4

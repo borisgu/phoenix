@@ -1,6 +1,6 @@
 import json
 
-with open('config.json', 'r') as f:
+with open('/opt/config.json', 'r') as f:
     config = json.load(f)
 
 # Assign configuration values
@@ -25,3 +25,4 @@ version = config['app_info']['version']
 
 # Kubernetes API configuration
 request_timeout = config['kube_api_config']['request_timeout']
+kube_mode = config['kube_api_config']['config_mode']
