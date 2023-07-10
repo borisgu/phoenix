@@ -13,4 +13,4 @@ spec:
       nodePort: {{ .Values.service.nodePort }}
       name: http
   selector: 
-    name: {{ .Values.name }}
+    {{- include "phoenix.selectorLabels" . | nindent 8 }}
