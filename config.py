@@ -26,3 +26,4 @@ version = config['app_info']['version']
 # Kubernetes API configuration
 request_timeout = config['kube_api_config']['request_timeout']
 kube_mode = config['kube_api_config']['config_mode']
+deletion_candidate_deployment = config['resources_control']['delete_deployment']
