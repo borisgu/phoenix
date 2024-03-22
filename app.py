@@ -77,7 +77,17 @@ def set_scale_operation():
     replicas = data.get("replicas")
     namespace = data.get("namespace")
     force_scale = data.get("force", "false")
+    delete_deploy = data.get("delete_deploy", "false")
     
+    if delete_deploy == "true":
+        deployments = kube.get_deletion_candidate_deployment(namespace)
+        logging.info("Going to delete deployment {} in namespace: {}".format(deployments, namespace))
+        for deploy in deployments:
+            delete_result = kube.delete_deployment(namespace, deploy)
+            if not delete_result:
+                return jsonify({'error': 'Deployment {} could not be deleted in namespace {}'.format(deploy, namespace)}), 400
+            logging.info("Deployment {} deleted in namespace {}".format(deploy, namespace))
+        
     if not replicas or int(replicas) < 0:
         return jsonify({'error': 'Value of replicas must be 0 or above'}), 400
     

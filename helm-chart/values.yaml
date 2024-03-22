@@ -1,4 +1,3 @@
-
 name: phoenix
 replicaCount: 1
 image: boris1580/phoenix
@@ -21,13 +20,14 @@ ingress:
   enabled: true
   annotations:
     kubernetes.io/ingress.class: nginx
-  tls: []
+  tls:
+    []
     # - secretName: phoenix-tls
     #   hosts:
     #     - phoenix.bg.local
   hosts:
     - host: phoenix.bg.local
-      paths: 
+      paths:
         - path: /namespaces/all
           pathType: ImplementationSpecific
           backend:
@@ -134,10 +134,13 @@ config: |-
       },
       "app_info": {
           "name": "Phoenix",
-          "version": "1.2.1"
+          "version": "1.2.14"
       },
       "kube_api_config": {
           "request_timeout": "120",
           "config_mode": "incluster"
+      },
+      "resources_control": {
+          "delete_deployment": ["-devspace"]
       }
   }

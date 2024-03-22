@@ -3,7 +3,7 @@ import datetime
 import json
 import helpers
 from kubernetes import client, config
-from config import started, stopped, created, worktime, ignored_namespaces, ttl, request_timeout, exception, kube_mode
+from config import started, stopped, created, worktime, ignored_namespaces, ttl, request_timeout, exception, kube_mode, deletion_candidate_deployment
 
 
 # Load the Kubernetes configuration according to configuration in json file
@@ -96,11 +96,11 @@ def get_expired_namespaces():
 
     return expired_namespaces
 
-def get_deployments(namespace):
+def get_deployments(namespace_name):
 
     deployments = []    
     # Get a list of all Deployments in the Namespace
-    deployment_list = api_apps.list_namespaced_deployment(namespace).items
+    deployment_list = api_apps.list_namespaced_deployment(namespace_name).items
 
     # Loop through each Deployment and add to new list
     for dep in deployment_list:
@@ -108,10 +108,27 @@ def get_deployments(namespace):
     
     return deployments
 
-def get_statefulsets(namespace):
+def get_deletion_candidate_deployment(namespace_name):
+    # Since we use devspace it creates a deployment with the same name as the namespace and -devspace at the end
+    # We want to delete them all and this function will help us to get the list of all deployments that we want to delete
+
+    devspace_deployments = []
+    # List deployments in the specified namespace
+    deployments_list = api_apps.list_namespaced_deployment(namespace_name)
+
+    # Iterate over the list of deployments
+    for deployment in deployments_list.items:
+        deployment_name = deployment.metadata.name
+        # Check if the deployment name contains any string from the list
+        if any(s in deployment_name for s in deletion_candidate_deployment):
+            devspace_deployments.append(deployment_name)
+
+    return devspace_deployments
+
+def get_statefulsets(namespace_name):
     statefulsets = []
     # Get a list of StatefulSets in the specified namespace
-    stateful_sets = api_apps.list_namespaced_stateful_set(namespace=namespace)
+    stateful_sets = api_apps.list_namespaced_stateful_set(namespace=namespace_name)
 
     # Loop through each StatefulSets and add to new list
     for stateful_set in stateful_sets.items:
@@ -222,3 +239,11 @@ def update_working_time(namespace_name):
             return True
         else:
             return False
+
+def delete_deployment(namespace_name, deployment_name):
+    # Delete the Deployment
+    try:
+        api_apps.delete_namespaced_deployment(name=deployment_name, namespace=namespace_name)
+        return True, None
+    except Exception as exception:
+        return False, exception
