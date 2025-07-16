@@ -162,7 +162,7 @@ def set_scale_operation():
                 return jsonify({'error': 'Deployment {} could not be deleted in namespace {}'.format(deploy, namespace)}), 400
             logging.info("Deployment {} deleted in namespace {}".format(deploy, namespace))
 
-    if not replicas or int(replicas) < 0:
+    if replicas is None or int(replicas) < 0:
         return jsonify({'error': 'Value of replicas must be 0 or above'}), 400
 
     excepted_namespaces = get_excepted_namespaces()
