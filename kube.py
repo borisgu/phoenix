@@ -1,27 +1,57 @@
 
+
 import datetime
 import json
+import os
 import helpers
+import boto3
 from kubernetes import client, config
 from config import started, stopped, created, worktime, ignored_namespaces, ttl, request_timeout, exception, kube_mode, deletion_candidate_deployment
 
 
-# Load the Kubernetes configuration according to configuration in json file
-if kube_mode == "incluster":
-    config.load_incluster_config()
-else:
-    config.load_kube_config()
 
+# Helper to assume an AWS role and set env vars for boto/k8s
+def assume_aws_role(role_arn, session_name="phoenix-assume-role", region_name=None):
+    """
+    Assumes the given AWS role and sets environment variables for AWS credentials.
+    Returns the credentials dict.
+    """
+    sts = boto3.client("sts", region_name=region_name)
+    assumed = sts.assume_role(RoleArn=role_arn, RoleSessionName=session_name)
+    creds = assumed["Credentials"]
+    os.environ["AWS_ACCESS_KEY_ID"] = creds["AccessKeyId"]
+    os.environ["AWS_SECRET_ACCESS_KEY"] = creds["SecretAccessKey"]
+    os.environ["AWS_SESSION_TOKEN"] = creds["SessionToken"]
+    return creds
 
-# Create a Kubernetes API client
-api_client = client.ApiClient()
-api_client.request_timeout = int(request_timeout)
+# Helper to load kube config with context and (optionally) assume role
+def setup_kube_client(context=None, role_arn=None, region_name=None):
+    """
+    Optionally assumes an AWS role, then loads kube config for the given context.
+    Returns (api_core, api_apps)
+    """
+    if role_arn:
+        assume_aws_role(role_arn, region_name=region_name)
+    if kube_mode == "incluster":
+        config.load_incluster_config()
+    else:
+        if context:
+            config.load_kube_config(context=context)
+        else:
+            config.load_kube_config()
+    api_client = client.ApiClient()
+    api_client.request_timeout = int(request_timeout)
+    api_core = client.CoreV1Api(api_client)
+    api_apps = client.AppsV1Api(api_client)
+    return api_core, api_apps
 
-# Get the Namespace API object
-api_core = client.CoreV1Api(api_client)
-
-# Get the Apps API object
-api_apps = client.AppsV1Api(api_client)
+# Default: use legacy global clients
+api_core, api_apps = setup_kube_client()
+def setup_kube_for_api(context=None, role_arn=None, region_name=None):
+    """
+    For API-triggered calls: set up and return (api_core, api_apps) for the given context/role.
+    """
+    return setup_kube_client(context=context, role_arn=role_arn, region_name=region_name)
 
 
 def get_namespaces():
